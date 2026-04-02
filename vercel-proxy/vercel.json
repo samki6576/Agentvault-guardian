@@ -1,15 +1,15 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
   "routes": [
     { "src": "/api/vault/(.*)", "dest": "/api/vault.js" },
-    { "src": "/api/anomaly",    "dest": "/api/anomaly.js" }
+    { "src": "/api/anomaly",   "dest": "/api/anomaly.js" }
   ],
-  "env": {
-    "AUTH0_DOMAIN":           "@auth0_domain",
-    "AUTH0_CLIENT_ID":        "@auth0_client_id",
-    "TOKEN_VAULT_SECRET":     "@token_vault_secret",
-    "ANOMALY_WEBHOOK_SECRET": "@anomaly_webhook_secret"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
