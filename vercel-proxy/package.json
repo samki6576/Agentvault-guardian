@@ -1,0 +1,17 @@
+{
+  "name": "agentvault-proxy",
+  "version": "1.0.0",
+  "description": "Vercel serverless proxy for AgentVault Guardian — Token Vault API relay",
+  "scripts": {
+    "local": "npx vercel dev",
+    "deploy": "npx vercel deploy --prod",
+    "secrets:apply": "node ./scripts/add-secrets.js"
+  },
+  "dependencies": {
+    "auth0": "^4.0.0",
+    "vercel": "^50.38.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
