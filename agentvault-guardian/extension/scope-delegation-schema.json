@@ -1,0 +1,83 @@
+{
+  "$schema": "https://agentvault.io/schemas/delegation/v1.json",
+  "swarm_id": "trip-planner-tokyo-20260402",
+  "description": "5-agent swarm for Tokyo trip planning — all tokens issued via Auth0 Token Vault",
+  "orchestrator": {
+    "agent_id": "orchestrator",
+    "model": "Llama-3.1-8B-Instruct-q4f32_1-MLC",
+    "runtime": "WebLLM/OpenClaw",
+    "token_vault_token_id": "tv_orch_abc123",
+    "granted_scopes": ["calendar:read", "travel:search", "booking:write"],
+    "ttl_seconds": 1800,
+    "issued_at": "2026-04-02T14:32:00Z",
+    "consent_proof": "0xe9f1a2...3c4d"
+  },
+  "sub_agents": [
+    {
+      "agent_id": "researcher",
+      "role": "Searches flights, hotels, and activities",
+      "delegated_scopes": ["travel:search"],
+      "parent_token_id": "tv_orch_abc123",
+      "child_token_id": "tv_res_def456",
+      "ttl_seconds": 1800,
+      "max_api_calls": 50,
+      "consent_proof": "0xf3a2b9...8c1d",
+      "local_only": false,
+      "notes": "Read-only; cannot exceed travel:search scope granted by orchestrator"
+    },
+    {
+      "agent_id": "analyzer",
+      "role": "Checks calendar availability and schedule conflicts",
+      "delegated_scopes": ["calendar:read"],
+      "parent_token_id": "tv_orch_abc123",
+      "child_token_id": "tv_ana_ghi789",
+      "ttl_seconds": 1800,
+      "max_api_calls": 20,
+      "consent_proof": "0xb9e1a2...4f7a",
+      "local_only": false,
+      "notes": "Read-only Google Calendar access; no write permissions"
+    },
+    {
+      "agent_id": "reporter",
+      "role": "Synthesizes research + calendar data into a formatted trip plan",
+      "delegated_scopes": [],
+      "parent_token_id": null,
+      "child_token_id": null,
+      "ttl_seconds": null,
+      "max_api_calls": 0,
+      "consent_proof": null,
+      "local_only": true,
+      "notes": "Runs entirely in-browser; no external API calls; no token issued"
+    },
+    {
+      "agent_id": "booker",
+      "role": "Confirms and pays for flights/hotels after user approval",
+      "delegated_scopes": ["booking:write"],
+      "parent_token_id": "tv_orch_abc123",
+      "child_token_id": "tv_book_jkl012",
+      "ttl_seconds": 300,
+      "max_api_calls": 3,
+      "consent_proof": "0xa8f0c3...7bc6",
+      "step_up_required": true,
+      "step_up_method": ["webrtc_liveness", "webauthn_biometric"],
+      "local_only": false,
+      "notes": "Short-lived 5-min token; elevated grant requires biometric step-up; max 3 API calls"
+    }
+  ],
+  "anomaly_policy": {
+    "auto_revoke_on": [
+      "rate_limit_exceeded",
+      "scope_escalation_attempt",
+      "anomalous_payload_detected",
+      "unusual_geographic_origin"
+    ],
+    "webhook": "https://agentvault.vercel.app/api/anomaly",
+    "revoke_cascade": true,
+    "notify_user": true
+  },
+  "audit": {
+    "store_consent_proofs": true,
+    "log_stream": "auth0_log_stream",
+    "retention_days": 90
+  }
+}

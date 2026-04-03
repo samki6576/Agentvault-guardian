@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "AgentVault Guardian",
+  "version": "1.0.0",
+  "description": "Sovereign permission vault for local AI agents — powered by Auth0 Token Vault",
+  "permissions": [
+    "storage",
+    "identity",
+    "identity.email",
+    "alarms",
+    "notifications",
+    "scripting",
+    "activeTab",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "https://*.auth0.com/*",
+    "https://agentvault.vercel.app/*",
+    "https://*.googleapis.com/*",
+    "https://api.github.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["webllm-worker.js", "models/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none';"
+  }
+}

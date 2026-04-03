@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgentVault Guardian</title>
+  <style>
+    :root {
+      --vault-purple: #6C47FF;
+      --vault-dark: #0D0D1A;
+      --vault-surface: #1A1A2E;
+      --vault-border: rgba(108,71,255,0.3);
+      --vault-text: #E8E8F0;
+      --vault-muted: #888899;
+      --vault-success: #00D4AA;
+      --vault-danger: #FF4757;
+      --vault-warn: #FFA500;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 420px; min-height: 560px;
+      background: var(--vault-dark);
+      color: var(--vault-text);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--vault-border);
+      background: linear-gradient(135deg, #0D0D1A 0%, #1a0533 100%);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px; background: var(--vault-purple);
+      border-radius: 8px; display: flex; align-items: center;
+      justify-content: center; font-size: 18px;
+    }
+    .logo-text { font-weight: 700; font-size: 14px; letter-spacing: 0.5px; }
+    .logo-sub { color: var(--vault-muted); font-size: 10px; letter-spacing: 1px; }
+    .auth-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--vault-success); }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--vault-success); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .tabs { display: flex; border-bottom: 1px solid var(--vault-border); background: var(--vault-surface); }
+    .tab {
+      flex: 1; padding: 10px; text-align: center; font-size: 11px;
+      letter-spacing: 0.8px; cursor: pointer; color: var(--vault-muted);
+      border-bottom: 2px solid transparent; transition: all 0.2s;
+    }
+    .tab.active { color: var(--vault-purple); border-bottom-color: var(--vault-purple); }
+
+    .nft-gallery { padding: 16px 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .nft-badge {
+      background: var(--vault-surface); border: 1px solid var(--vault-border);
+      border-radius: 12px; padding: 14px; cursor: grab;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .nft-badge::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--vault-purple), var(--vault-success));
+    }
+    .nft-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,71,255,0.2); }
+    .nft-badge.dragging { opacity: 0.5; cursor: grabbing; }
+    .nft-badge[data-risk="high"]::before {
+      background: linear-gradient(90deg, var(--vault-danger), var(--vault-warn));
+    }
+    .badge-icon { font-size: 28px; margin-bottom: 8px; }
+    .badge-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .badge-scope { font-size: 10px; color: var(--vault-muted); margin-bottom: 8px; }
+    .badge-meta { display: flex; justify-content: space-between; align-items: center; }
+    .badge-ttl { font-size: 10px; color: var(--vault-warn); }
+    .badge-risk { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px; }
+    .risk-low  { background: rgba(0,212,170,0.15); color: var(--vault-success); }
+    .risk-high { background: rgba(255,71,87,0.15);  color: var(--vault-danger); }
+
+    .drop-zone-container { padding: 0 20px 16px; display: flex; gap: 10px; }
+    .drop-zone {
+      flex: 1; border: 2px dashed; border-radius: 10px; padding: 12px;
+      text-align: center; font-size: 10px; letter-spacing: 0.5px;
+      transition: all 0.2s; cursor: pointer;
+    }
+    .drop-delegate { border-color: rgba(108,71,255,0.4); color: var(--vault-purple); }
+    .drop-delegate.over { background: rgba(108,71,255,0.1); border-color: var(--vault-purple); }
+    .drop-revoke { border-color: rgba(255,71,87,0.4); color: var(--vault-danger); }
+    .drop-revoke.over { background: rgba(255,71,87,0.1); border-color: var(--vault-danger); }
+
+    .swarm-view { padding: 16px 20px; }
+    .swarm-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .swarm-title { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .launch-btn {
+      background: var(--vault-purple); border: none; color: white;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer;
+      font-size: 11px; font-family: inherit; font-weight: 700; transition: opacity 0.2s;
+    }
+    .launch-btn:hover { opacity: 0.85; }
+    .agent-tree { display: flex; flex-direction: column; gap: 8px; }
+    .agent-node {
+      background: var(--vault-surface); border: 1px solid var(--vault-border);
+      border-radius: 8px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .agent-node.sub { margin-left: 28px; border-left: 3px solid var(--vault-purple); }
+    .agent-icon { font-size: 18px; }
+    .agent-info { flex: 1; }
+    .agent-name { font-size: 12px; font-weight: 700; }
+    .agent-scopes { font-size: 10px; color: var(--vault-muted); }
+    .agent-status { width: 8px; height: 8px; border-radius: 50%; }
+    .status-active  { background: var(--vault-success); }
+    .status-pending { background: var(--vault-warn); }
+    .status-revoked { background: var(--vault-danger); }
+
+    .audit-log { padding: 16px 20px; }
+    .audit-entry {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .audit-time  { font-size: 10px; color: var(--vault-muted); min-width: 52px; }
+    .audit-event { flex: 1; font-size: 11px; }
+    .audit-proof { font-size: 9px; color: var(--vault-purple); font-family: monospace; cursor: pointer; }
+
+    .stepup-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .stepup-modal.active { display: flex; }
+    .stepup-card {
+      background: var(--vault-surface); border: 1px solid var(--vault-danger);
+      border-radius: 16px; padding: 24px; width: 360px; text-align: center;
+    }
+    .stepup-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--vault-danger); }
+    .stepup-desc  { font-size: 12px; color: var(--vault-muted); margin-bottom: 20px; }
+    .camera-frame {
+      width: 200px; height: 150px; background: #000;
+      border: 2px solid var(--vault-danger); border-radius: 12px;
+      margin: 0 auto 16px; position: relative; overflow: hidden;
+    }
+    .scan-line {
+      position: absolute; left: 0; right: 0; height: 2px;
+      background: var(--vault-danger); animation: scan 2s linear infinite;
+    }
+    @keyframes scan { from { top: 0; } to { top: 148px; } }
+    .biometric-btn {
+      background: var(--vault-danger); border: none; color: white;
+      padding: 10px 24px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-family: inherit; font-weight: 700;
+      width: 100%; transition: opacity 0.2s;
+    }
+    .biometric-btn:hover { opacity: 0.85; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🔐</div>
+      <div>
+        <div class="logo-text">AgentVault Guardian</div>
+        <div class="logo-sub">Auth0 Token Vault · Secured</div>
+      </div>
+    </div>
+    <div class="auth-status">
+      <div class="status-dot"></div>
+      <span>VAULT LIVE</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="badges">🏆 BADGES</div>
+    <div class="tab" data-tab="swarm">🤖 SWARM</div>
+    <div class="tab" data-tab="audit">📋 AUDIT</div>
+  </div>
+
+  <div id="tab-badges" class="tab-content active">
+    <div class="nft-gallery" id="nft-gallery"></div>
+    <div class="drop-zone-container">
+      <div class="drop-zone drop-delegate" id="drop-delegate">⤵ DROP TO DELEGATE<br>to sub-agent</div>
+      <div class="drop-zone drop-revoke"   id="drop-revoke">✕ DROP TO REVOKE<br>instant cancel</div>
+    </div>
+  </div>
+
+  <div id="tab-swarm" class="tab-content">
+    <div class="swarm-view">
+      <div class="swarm-header">
+        <div class="swarm-title">🌐 ACTIVE SWARM</div>
+        <button class="launch-btn" id="launch-swarm-btn">+ LAUNCH SWARM</button>
+      </div>
+      <div class="agent-tree" id="agent-tree"></div>
+    </div>
+  </div>
+
+  <div id="tab-audit" class="tab-content">
+    <div class="audit-log" id="audit-log"></div>
+  </div>
+
+  <div class="stepup-modal" id="stepup-modal">
+    <div class="stepup-card">
+      <div class="stepup-title">⚠ HIGH-RISK ACTION DETECTED</div>
+      <div class="stepup-desc">
+        Booking agent wants to commit: <strong>Book flight SFO→NRT $1,240</strong><br>
+        Biometric verification required.
+      </div>
+      <div class="camera-frame">
+        <div class="scan-line"></div>
+        <video id="camera-feed" autoplay muted style="width:100%;height:100%;object-fit:cover;"></video>
+      </div>
+      <button class="biometric-btn" id="biometric-confirm-btn">🫆 CONFIRM WITH BIOMETRICS</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
